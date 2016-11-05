@@ -58,7 +58,7 @@ exports.signin = function(req, res) {
 exports.signup = function(req, res) {
     var email = req.body.email;
     var password = req.body.password;
-
+    debugger;
     User
         .findOne({
             email: email
@@ -95,10 +95,6 @@ exports.signup = function(req, res) {
 exports.verify = function(req, res) {
     var userId = req.params.userId;
     var token = req.query.confirm_token;
-
-    console.log(userId);
-    console.log(token);
-
     var md5 = crypto.createHash('md5');
     var testToken = md5.update(config.sessionSecret + userId).digest('hex');
     if (token === testToken) {
