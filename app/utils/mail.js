@@ -7,39 +7,60 @@ var crypto = require('crypto');
 var nodemailer = require('nodemailer');
 var env = process.env.NODE_ENV || 'development';
 var config = require('../config/config')[env];
-var mail = config.mail;
-var mailtpl = require('../config/mailtpl');
+var logger  = require('./logger');
+//var mailtpl = require('../config/mailtpl');
+var transporter = nodemailer.createTransport(config.mail_opts);
 
-function genVerifyLink(userId) {
+/**
+ * 生成token
+ * @param userId
+ */
+var genToken = function(userId) {
     var md5 = crypto.createHash('md5');
-    var sign = md5.update(config.sessionSecret + userId).digest('hex');
-    return config.web + '/users/' + userId + '/verify?confirm_token=' + sign;
+    return md5.update(config.sessionSecret + userId).digest('hex');
 }
 
-exports.sendVerifyEmail = function(toEmail, userId, callback) {
-
-    var transporter = nodemailer.createTransport({
-
-        service: mail.service,
-        //host: "smtp.163.com",
-        //secureConnection: true,
-        //port: 25,  // port for secure SMTP
-        auth: {
-            user: mail.account,
-            pass: mail.password
+/**
+ * Send an email
+ * @param {Object} data 邮件对象
+ */
+var sendMail = function (data) {
+    if (config.debug) {
+        return;
+    }
+    // 遍历邮件数组，发送每一封邮件，如果有发送失败的，就再压入数组，同时触发mailEvent事件
+    transporter.sendMail(data, function (err) {
+        if (err) {
+            // 写为日志
+            logger.error(err);
         }
     });
-
-    var verifyLink = genVerifyLink(userId);
-
-    var mailOptions = {
-        from: mail.account,
-        to: toEmail,
-        subject: mailtpl.subject,
-        text: mailtpl.prefixText + verifyLink + mailtpl.suffixText,
-        html: mailtpl.prefixHtml + verifyLink + mailtpl.suffixHtml
-    };
-
-    transporter.sendMail(mailOptions, callback);
 };
+
+/**
+ * 发送激活通知邮件
+ * @param toEmail
+ * @param userId
+ */
+exports.sendActiveMail = function (toEmail, userId) {
+
+    var token = genToken(userId);
+    var from    = config.mail_opts.auth.user
+    var to      = toEmail;
+    var subject = config.name + '社区帐号激活';
+    var html    = '<p>您好：</p>' +
+        '<p>我们收到您在' + config.name + '社区的注册信息，请点击下面的链接来激活帐户：</p>' +
+        '<a href  = "' + config.web  + '/users/' + userId + '/verify?confirm_token=' + token + '">激活链接</a>' +
+        '<p>若您没有在' + config.name + '社区填写过注册信息，说明有人滥用了您的电子邮箱，请删除此邮件，我们对给您造成的打扰感到抱歉。</p>' +
+        '<p>' + config.name + '社区 谨上。</p>';
+
+    sendMail({
+        from: from,                   // 发送者
+        to: to,                       // 接受者,可以同时发送多个,以逗号隔开
+        subject: subject,             // 标题
+        html: html                    // html代码
+    });
+};
+
+
 

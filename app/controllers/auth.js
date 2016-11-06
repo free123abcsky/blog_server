@@ -9,6 +9,7 @@ var jwt = require('jsonwebtoken');
 var User = require('../models').User;
 var env = process.env.NODE_ENV || 'development';
 var config = require('../config/config')[env];
+var logger  = require('../utils/logger');
 var mail = require('../utils/mail');
 
 function genLoginToken(user) {
@@ -104,22 +105,20 @@ exports.signup = function(req, res) {
 
             user.save(function(err, user) {
 
-                mail.sendVerifyEmail(email, user._id, function(err, _res) {
+                mail.sendActiveMail(email, user._id);
+                user = user.toObject();
+                delete user.passwordHash;
+                var token = genLoginToken(user);
 
-                    user = user.toObject();
-                    delete user.passwordHash;
-                    var token = genLoginToken(user);
-
-                    return res.status(200).send({
-                        user: user,
-                        token: token
-                    });
+                return res.status(200).send({
+                    user: user,
+                    token: token
                 });
             });
         });
 };
 
-exports.verify = function(req, res) {
+exports.activeAccount = function(req, res) {
     var userId = req.params.userId;
     var token = req.query.confirm_token;
     var md5 = crypto.createHash('md5');

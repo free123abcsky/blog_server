@@ -11,7 +11,7 @@ var router = express.Router();
 // 认证
 router.post( '/signin', auth.signin);  //用户登录
 router.post('/signup', auth.signup); //用户注册
-router.get('/users/:userId/verify', auth.verify);  //邮箱链接激活帐户
+router.get('/users/:userId/verify', auth.activeAccount);  //邮箱链接激活帐户
 
 module.exports = router;
 
