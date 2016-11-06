@@ -26,6 +26,11 @@
     "nodemailer": "^1.4.0",
     "qn": "~1.0.1",
     "request": "^2.60.0",
+    "validator": "^6.1.0",
     "wechat": "^2.0.1"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "supertest": "^2.0.1"
   }
 }

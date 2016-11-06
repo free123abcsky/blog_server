@@ -4,6 +4,7 @@
  * Desc：认证控制器
  */
 var crypto = require('crypto');
+var validator      = require('validator');
 var jwt = require('jsonwebtoken');
 var User = require('../models').User;
 var env = process.env.NODE_ENV || 'development';
@@ -26,6 +27,19 @@ function genLoginToken(user) {
 exports.signin = function(req, res) {
     var email = req.body.email;
     var password = req.body.password;
+
+    // 验证信息的正确性
+    if ([email, password].some(function (item) { return item === ''; })) {
+        return res.status(403).send({
+            error: '信息不完整'
+        });
+    }
+
+    if (!validator.isEmail(email)) {
+        return res.status(403).send({
+            error: '邮箱不合法'
+        });
+    }
 
     User
         .findOne({
@@ -58,7 +72,20 @@ exports.signin = function(req, res) {
 exports.signup = function(req, res) {
     var email = req.body.email;
     var password = req.body.password;
-    debugger;
+
+    // 验证信息的正确性
+    if ([email, password].some(function (item) { return item === ''; })) {
+        return res.status(403).send({
+            error: '信息不完整'
+        });
+    }
+
+    if (!validator.isEmail(email)) {
+        return res.status(403).send({
+            error: '邮箱不合法'
+        });
+    }
+
     User
         .findOne({
             email: email
